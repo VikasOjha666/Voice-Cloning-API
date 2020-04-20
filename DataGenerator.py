@@ -1,3 +1,4 @@
+#Generates data for the voice cloning model.
 from tkinter import *
 import pyaudio
 import wave
@@ -7,6 +8,7 @@ import wave
 class RecordAPI:
 
     def __init__(self, chunk=3024, format=pyaudio.paInt16, channels=2, rate=44100):
+        """Creates the GUI for the data generator."""
         self.top=Tk()
         self.top.title('Data Generator')
         self.top.geometry('500x400')
@@ -32,7 +34,6 @@ class RecordAPI:
         self.txt1.pack()
         self.record_button.pack()
         self.next_button.pack()
-        #self.stop_button.pack()
         self.top.mainloop()
 
 
@@ -40,11 +41,13 @@ class RecordAPI:
 
 
     def get_index(self):
+        """Gives the index using which the text is obtained which has to be shown on GUI. """
         idx=self.i
         self.i+=1
         return idx
 
     def change_label(self):
+        """Changes the text on text generator GUI"""
         try:
             self.txt1.delete('1.0',END)
             text2insert=self.list1[self.get_index()]
@@ -54,6 +57,7 @@ class RecordAPI:
             pass
 
     def start_record(self,event):
+        """Records the audio until self.st variable is True and saves to file."""
         self.st = 1
         self.frames = []
         stream = self.p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
@@ -73,6 +77,8 @@ class RecordAPI:
         wf.close()
 
     def stop(self,event):
+        """Sets the self.st variable to false which stops the recording. """
         self.st = 0
 
+#Cretes the instance of the Recorder Object.
 recapi = RecordAPI()
