@@ -74,7 +74,8 @@ class RecordAPI:
 
         stream.close()
         filename=''.join(random.choice(string.ascii_lowercase) for i in range(12))
-        loc='./Data/wavs/'+filename+'.wav'
+        filename=filename+'.wav'
+        loc='./Data/wavs/'+filename
         wf = wave.open(loc,'wb')
         wf.setnchannels(self.CHANNELS)
         wf.setsampwidth(self.p.get_sample_size(self.FORMAT))
