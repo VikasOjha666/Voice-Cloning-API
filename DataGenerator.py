@@ -14,17 +14,18 @@ class RecordAPI:
         """Creates the GUI for the data generator."""
         self.top=Tk()
         self.top.title('Data Generator')
-        self.top.geometry('500x400')
+        self.top.geometry('500x430')
         self.record_button=Button(self.top,text='Record',fg='red',command=lambda:self.start_record())
         self.record_button.bind("<Button-1>", self.start_record)
         self.record_button.bind("<ButtonRelease-1>", self.stop)
         self.next_button=Button(self.top,text='Next',fg='red',command=lambda:self.change_label())
+        self.prev_button=Button(self.top,text='Prev',fg='red',command=lambda:self.prev_label())
         self.heading=Label(self.top,text='Record Speech',fg='red')
         self.txt1=Text(self.top,height=20,width=60,fg='red')
-        self.txt1.insert(INSERT,"Hello how are you")
+        self.txt1.insert(INSERT,"This is welcome screen")
         self.collections = []
         self.CHUNK = chunk
-        self.i=0
+        self.i=-1
         self.txtstream=open('TextforData.txt','r').readlines()
         self.FORMAT = format
         self.CHANNELS = channels
@@ -37,17 +38,31 @@ class RecordAPI:
         self.txt1.pack()
         self.record_button.pack()
         self.next_button.pack()
+        self.prev_button.pack()
         self.top.mainloop()
 
 
 
 
+    def prev_index(self):
+        """Gives the index using which the text is obtained which has to be shown on GUI. """
+        self.i-=1
+        return self.i
+
+    def prev_label(self):
+        """Changes the text on text generator GUI"""
+        try:
+            self.txt1.delete('1.0',END)
+            text2insert=self.txtstream[self.prev_index()]
+            self.txt1.insert(INSERT,text2insert)
+            self.top.update()
+        except:
+            pass
 
     def get_index(self):
         """Gives the index using which the text is obtained which has to be shown on GUI. """
-        idx=self.i
         self.i+=1
-        return idx
+        return self.i
 
     def change_label(self):
         """Changes the text on text generator GUI"""
