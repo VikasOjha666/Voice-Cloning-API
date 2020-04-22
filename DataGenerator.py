@@ -2,6 +2,9 @@
 from tkinter import *
 import pyaudio
 import wave
+import string
+import csv
+import random
 
 
 
@@ -22,7 +25,7 @@ class RecordAPI:
         self.collections = []
         self.CHUNK = chunk
         self.i=0
-        self.list1=['How are you?','I am fine.','I am dangerous','I dreamed I was messing you were so scared and no one would listen cause no one cared so if your asking me']
+        self.txtstream=open('TextforData.txt','r').readlines()
         self.FORMAT = format
         self.CHANNELS = channels
         self.RATE = rate
@@ -50,11 +53,13 @@ class RecordAPI:
         """Changes the text on text generator GUI"""
         try:
             self.txt1.delete('1.0',END)
-            text2insert=self.list1[self.get_index()]
+            text2insert=self.txtstream[self.get_index()]
             self.txt1.insert(INSERT,text2insert)
             self.top.update()
         except:
             pass
+    def random_filename(self):
+        textpart=[np.random.choice([string.alphabets])]
 
     def start_record(self,event):
         """Records the audio until self.st variable is True and saves to file."""
@@ -68,13 +73,17 @@ class RecordAPI:
             self.top.update()
 
         stream.close()
-
-        wf = wave.open('test_recording.wav', 'wb')
+        filename=''.join(random.choice(string.ascii_lowercase) for i in range(12))
+        loc='./Data/wavs/'+filename+'.wav'
+        wf = wave.open(loc,'wb')
         wf.setnchannels(self.CHANNELS)
         wf.setsampwidth(self.p.get_sample_size(self.FORMAT))
         wf.setframerate(self.RATE)
         wf.writeframes(b''.join(self.frames))
         wf.close()
+        with open('./Data/transcripts.csv','a+') as csvfile:
+            csvwriter=csv.writer(csvfile,delimiter=' ')
+            csvwriter.writerow([f'{filename}|'+self.txt1.get("1.0",END)])
 
     def stop(self,event):
         """Sets the self.st variable to false which stops the recording. """
