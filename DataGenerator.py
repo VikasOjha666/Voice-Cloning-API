@@ -23,7 +23,10 @@ class RecordAPI:
         self.heading=Label(self.top,text='Record Speech',fg='red')
         self.txt1=Text(self.top,height=20,width=60,fg='red')
         self.txt1.insert(INSERT,"This is welcome screen")
-        self.collections = []
+        self.record_number_var=0
+        self.record_text=Text(self.top,height=1,width=5)
+        self.record_text.insert(INSERT,"0")
+        self.record_no_label=Label(self.top,text="Record No:",fg="red")
         self.CHUNK = chunk
         self.i=-1
         self.txtstream=open('TextforData.txt','r').readlines()
@@ -39,6 +42,10 @@ class RecordAPI:
         self.record_button.pack()
         self.next_button.pack()
         self.prev_button.pack()
+        self.record_no_label.pack()
+        self.record_no_label.place(x=340,y=360)
+        self.record_text.pack()
+        self.record_text.place(x=410,y=360)
         self.top.mainloop()
 
 
@@ -55,6 +62,9 @@ class RecordAPI:
             self.txt1.delete('1.0',END)
             text2insert=self.txtstream[self.prev_index()]
             self.txt1.insert(INSERT,text2insert)
+            self.record_number_var-=1
+            self.record_text.delete('1.0',END)
+            self.record_text.insert(INSERT,str(self.record_number_var))
             self.top.update()
         except:
             pass
@@ -70,6 +80,9 @@ class RecordAPI:
             self.txt1.delete('1.0',END)
             text2insert=self.txtstream[self.get_index()]
             self.txt1.insert(INSERT,text2insert)
+            self.record_number_var+=1
+            self.record_text.delete('1.0',END)
+            self.record_text.insert(INSERT,str(self.record_number_var))
             self.top.update()
         except:
             pass
