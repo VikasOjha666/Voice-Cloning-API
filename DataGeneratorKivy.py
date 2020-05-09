@@ -1,79 +1,121 @@
-from kivy.app import App
-from kivy.uix.button import Button
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.button import Button
-from kivy.uix.label import Label
+from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import StringProperty
 
-import pyaudio
-import wave
-import multiprocessing,time
-import random
-import string
+from kivymd.app import MDApp
+from kivymd.theming import ThemableBehavior
+from kivymd.uix.list import OneLineIconListItem, MDList
 
-frames=[]
-st=multiprocessing.Value('i',1)
+KV = '''
+# Menu item in the DrawerList list.
+<ItemDrawer>:
+    theme_text_color: "Custom"
+    on_release: self.parent.set_color_item(self)
 
-def start_record(st):
-        """Records the audio until self.st variable is True and saves to file."""
-        frames = []
-        stream = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=2, rate=44100, input=True, frames_per_buffer=3024)
-        while st.value == 1:
-            data = stream.read(3024)
-            frames.append(data)
-            print("* recording")
+    IconLeftWidget:
+        id: icon
+        icon: root.icon
+        theme_text_color: "Custom"
+        text_color: root.text_color
 
 
-        stream.close()
-        filename=''.join(random.choice(string.ascii_lowercase) for i in range(12))
-        filename=filename+'.wav'
-        #loc='./Data/wavs/'+filename
-        wf = wave.open(filename,'wb')
-        wf.setnchannels(2)
-        wf.setsampwidth(pyaudio.PyAudio().get_sample_size(pyaudio.paInt16))
-        wf.setframerate(44100)
-        wf.writeframes(b''.join(frames))
-        wf.close()
-        with st.get_lock():
-            st.value=1
+<ContentNavigationDrawer>:
+    orientation: "vertical"
+    padding: "8dp"
+    spacing: "8dp"
 
-def stop_record(st):
-    with st.get_lock():
-        st.value=0
+    AnchorLayout:
+        anchor_x: "left"
+        size_hint_y: None
+        height: avatar.height
 
-def prompt_start():
-    time.sleep(0.8)
-    print("Start")
+        Image:
+            id: avatar
+            size_hint: None, None
+            size: "56dp", "56dp"
+            source: "data/logo/kivy-icon-256.png"
 
+    MDLabel:
+        text: "Voice Cloning Tool"
+        font_style: "Button"
+        size_hint_y: None
+        height: self.texture_size[1]
 
-class MultButton(GridLayout):
-    def __init__(self,**kwargs):
-        super(MultButton,self).__init__(**kwargs)
-        self.cols=2
-        # self.add_widget(Label(text='Hello Button'))
-        # self.add_widget(Button(text='Hello'))
-        # self.add_widget(Label(text='Shape Test'))
-        # self.add_widget(Button(text='Button2'))
-        self.st=1
-        self.isthereprevrec=0
-        self.frames=[]
+    MDLabel:
+        text: "MENU"
+        font_style: "Caption"
+        size_hint_y: None
+        height: self.texture_size[1]
+
+    ScrollView:
+
+        DrawerList:
+            id: md_list
 
 
 
-    def on_touch_down(self,touch):
-        multiprocessing.Process(target=prompt_start).start()
-        multiprocessing.Process(target=start_record,args=[st]).start()
+Screen:
 
-    def on_touch_up(self,touch):
-        multiprocessing.Process(target=stop_record,args=[st]).start()
+    NavigationLayout:
+
+        ScreenManager:
+
+            Screen:
+
+                BoxLayout:
+                    orientation: 'vertical'
+
+                    MDToolbar:
+                        title: "Explore Voice cloning Tool"
+                        elevation: 10
+                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+
+                    Widget:
+
+
+        MDNavigationDrawer:
+            id: nav_drawer
+
+            ContentNavigationDrawer:
+                id: content_drawer
+'''
+
+
+class ContentNavigationDrawer(BoxLayout):
+    pass
 
 
 
+class ItemDrawer(OneLineIconListItem):
+    icon = StringProperty()
 
 
+class DrawerList(ThemableBehavior, MDList):
+    def set_color_item(self, instance_item):
+        """Called when tap on a menu item."""
 
-class SimpleEvent(App):
+        # Set the color of the icon and text for the menu item.
+        for item in self.children:
+            if item.text_color == self.theme_cls.primary_color:
+                item.text_color = self.theme_cls.text_color
+                break
+        instance_item.text_color = self.theme_cls.primary_color
+
+
+class TestNavigationDrawer(MDApp):
     def build(self):
-        return MultButton()
+        return Builder.load_string(KV)
 
-if __name__=='__main__':
-    SimpleEvent().run()
+    def on_start(self):
+        icons_item = {
+            "record":"Record Voice",
+            "help": "Help",
+            "information": "About"
+        }
+        for icon_name in icons_item.keys():
+            self.root.ids.content_drawer.ids.md_list.add_widget(
+                ItemDrawer(icon=icon_name, text=icons_item[icon_name])
+            )
+
+
+TestNavigationDrawer().run()
