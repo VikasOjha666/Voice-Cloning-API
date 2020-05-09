@@ -5,6 +5,9 @@ from kivy.properties import StringProperty
 from kivymd.app import MDApp
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import OneLineIconListItem, MDList
+from kivy.uix.screenmanager import ScreenManager,Screen,CardTransition
+from kivy.uix.image import Image
+
 
 KV = '''
 # Menu item in the DrawerList list.
@@ -61,6 +64,7 @@ Screen:
         ScreenManager:
 
             Screen:
+                SliderWin
 
                 BoxLayout:
                     orientation: 'vertical'
@@ -79,6 +83,99 @@ Screen:
             ContentNavigationDrawer:
                 id: content_drawer
 '''
+
+
+#Slider part.
+
+
+
+class UISlide(Screen):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self.__wrapper=BoxLayout(orientation="vertical")
+        self.add_widget(self.__wrapper)
+
+    def add_child(self,child):
+        self.__wrapper.add_widget(child)
+
+class UISlider(BoxLayout):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self.__scrnmngr=ScreenManager(transition=CardTransition())
+        self.add_widget(self.__scrnmngr)
+        self.first_touch=None
+        self.moved=None
+
+    def add_slide(self,slide:UISlide):
+        self.__scrnmngr.add_widget(slide)
+
+    def __slide(self,direction):
+        mngr=self.__scrnmngr
+        mngr.transition.direction=direction
+
+        current=mngr.current_screen
+        if direction=="right":
+            idx=mngr.screens.index(current)
+            if idx==0:
+                pass
+            else:
+                mngr.current=mngr.previous()
+        else:
+            last=mngr.screens[-1]
+            if current==last:
+                pass
+            else:
+                mngr.current=mngr.next()
+    def on_touch_down(self,touch):
+        if self.collide_point(touch.x,touch.y):
+            self.first_touch=touch.x
+            touch.grab(self)
+            return True
+        return False
+
+    def on_touch_move(self,touch):
+        if self.collide_point(touch.x,touch.y) and touch.grab_current==self:
+            if self.moved:
+                return
+        if touch.x>self.first_touch:
+            self.__slide("right")
+        else:
+            self.__slide("left")
+        self.moved=True
+
+    def on_touch_up(self,touch):
+        if self.collide_point(touch.x,touch.y) and touch.grab_current==self:
+            touch.ungrab(self)
+            self.moved=None
+            return True
+        return False
+
+class SliderWin(BoxLayout):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        uislider=UISlider()
+        self.add_widget(uislider)
+        slide0=UISlide(name='scrn_0')
+        slide1=UISlide(name='scrn_1')
+        slide2=UISlide(name='scrn_2')
+
+        im0=Image(source="Bird.png",allow_stretch=True)
+        im1=Image(source="wallpaper.jpg",allow_stretch=True)
+        im2=Image(source="elephant-illusion.jpg",allow_stretch=True)
+
+        slide0.add_child(im0)
+        slide1.add_child(im1)
+        slide2.add_child(im2)
+
+
+
+        uislider.add_slide(slide0)
+        uislider.add_slide(slide1)
+        uislider.add_slide(slide2)
+
+
+
+
 
 
 class ContentNavigationDrawer(BoxLayout):
@@ -105,7 +202,7 @@ class DrawerList(ThemableBehavior, MDList):
 class TestNavigationDrawer(MDApp):
     def build(self):
         return Builder.load_string(KV)
-
+        # return SliderWin()
     def on_start(self):
         icons_item = {
             "record":"Record Voice",
