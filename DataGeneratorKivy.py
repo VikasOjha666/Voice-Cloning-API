@@ -5,11 +5,33 @@ from kivy.properties import StringProperty
 from kivymd.app import MDApp
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.list import OneLineIconListItem, MDList
-from kivy.uix.screenmanager import ScreenManager,Screen,CardTransition
+from kivy.uix.screenmanager import ScreenManager,Screen,CardTransition,FadeTransition
 from kivy.uix.image import Image
+from kivy.uix.button import Button
+
+class HomeScreen(Screen):
+    pass
+
+class RecordScreen(Screen):
+    pass
+
+class ScreenManagement(ScreenManager):
+    pass
+
+class AboutScreen(Screen):
+    pass
+
+class ContactUSScreen(Screen):
+    pass
+
+class LanguageSelectionScreen(Screen):
+    pass
 
 
-KV = '''
+
+
+KV1 = '''
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
 # Menu item in the DrawerList list.
 <ItemDrawer>:
     theme_text_color: "Custom"
@@ -53,11 +75,27 @@ KV = '''
     ScrollView:
 
         DrawerList:
-            id: md_list
+            OneLineListItem:
+                text:'Record Voice'
+                on_release:app.root.current='rec_screen'
+            OneLineListItem:
 
+                text:'Help'
+            OneLineListItem:
 
+                text:'About'
+            OneLineListItem:
+                text:'Record Voice'
+ScreenManagement:
+    transition:FadeTransition()
+    HomeScreen:
+    RecordScreen:
+    AboutScreen:
+    ContactUSScreen:
+    LanguageSelectionScreen:
 
-Screen:
+<HomeScreen>:
+    name:'home_screen'
 
     NavigationLayout:
 
@@ -82,7 +120,39 @@ Screen:
 
             ContentNavigationDrawer:
                 id: content_drawer
+
+<RecordScreen>:
+    name:'rec_screen'
+
+    NavigationLayout:
+
+        ScreenManager:
+
+            Screen:
+                Button:
+                    text:'Record'
+                    size_hint:0.1,0.1
+
+                BoxLayout:
+                    orientation: 'vertical'
+
+                    MDToolbar:
+                        title: "Explore Voice cloning Tool"
+                        elevation: 10
+                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+
+                    Widget:
+
+
+        MDNavigationDrawer:
+            id: nav_drawer
+
+            ContentNavigationDrawer:
+                id: content_drawer
 '''
+
+
+
 
 
 #Slider part.
@@ -201,18 +271,6 @@ class DrawerList(ThemableBehavior, MDList):
 
 class TestNavigationDrawer(MDApp):
     def build(self):
-        return Builder.load_string(KV)
-        # return SliderWin()
-    def on_start(self):
-        icons_item = {
-            "record":"Record Voice",
-            "help": "Help",
-            "information": "About"
-        }
-        for icon_name in icons_item.keys():
-            self.root.ids.content_drawer.ids.md_list.add_widget(
-                ItemDrawer(icon=icon_name, text=icons_item[icon_name])
-            )
-
+        return Builder.load_string(KV1)
 
 TestNavigationDrawer().run()
