@@ -10,15 +10,78 @@ from kivy.uix.image import Image
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.graphics import Color
+import csv
+import wave
+import pyaudio
+import multiprocessing
+import random
+import string
 
+
+#Some variable declaration.
+line_ptr=0
+read_files=open('TextforData.txt','r').readlines()
+
+#multiprocessing and recording related variables.
+st=multiprocessing.Value('i',1)
+frames=[]
 
 class HomeScreen(Screen):
     pass
 
 class RecordScreen(Screen):
     def __init__(self,**kwargs):
-        self.textinp='text1'
         super(Screen,self).__init__(**kwargs)
+
+    def next_label(self):
+        global line_ptr,read_files
+        line_ptr+=1
+        to_ret=read_files[line_ptr]
+        return to_ret
+    def prev_label(self):
+        global line_ptr,read_files
+        line_ptr-=1
+        to_ret=read_files[line_ptr]
+        return to_ret
+    def start_record(self,st):
+            """Records the audio until self.st variable is True and saves to file."""
+            frames = []
+            stream = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=2, rate=44100, input=True, frames_per_buffer=3024)
+            while st.value == 1:
+                data = stream.read(3024)
+                frames.append(data)
+                print("* recording")
+
+            stream.close()
+            filename=''.join(random.choice(string.ascii_lowercase) for i in range(12))
+            filename=filename+'.wav'
+            loc='./Data/wavs/'+filename
+            wf = wave.open(loc,'wb')
+            wf.setnchannels(2)
+            wf.setsampwidth(pyaudio.PyAudio().get_sample_size(pyaudio.paInt16))
+            wf.setframerate(44100)
+            wf.writeframes(b''.join(frames))
+            wf.close()
+            with open('./Data/transcripts.csv','a+') as csvfile:
+                csvwriter=csv.writer(csvfile,delimiter=' ')
+                csvwriter.writerow([f'{filename}|'+self.ids.txtread.text])
+    def stop_record(self,st):
+        with st.get_lock():
+            st.value=0
+
+    def ssrecord(self):
+        global st
+        if __name__ == '__main__':
+            multiprocessing.Process(target=self.start_record,args=[st]).start()
+    def strecord(self):
+        global st
+        if __name__ == '__main__':
+            multiprocessing.Process(target=self.stop_record,args=[st]).start()
+
+
+
+
+
 
 class ScreenManagement(ScreenManager):
     pass
@@ -33,353 +96,6 @@ class HelpScreen(Screen):
     pass
 
 
-KV1 = '''
-#:import FadeTransition kivy.uix.screenmanager.FadeTransition
-# Menu item in the DrawerList list.
-<ItemDrawer>:
-    theme_text_color: "Custom"
-    on_release: self.parent.set_color_item(self)
-
-    IconLeftWidget:
-        id: icon
-        icon: root.icon
-        theme_text_color: "Custom"
-        text_color: root.text_color
-
-
-<ContentNavigationDrawer>:
-    orientation: "vertical"
-    padding: "8dp"
-    spacing: "8dp"
-
-    AnchorLayout:
-        anchor_x: "left"
-        size_hint_y: None
-        height: avatar.height
-
-        Image:
-            id: avatar
-            size_hint: None, None
-            size: "56dp", "56dp"
-            source: "data/logo/kivy-icon-256.png"
-
-    MDLabel:
-        text: "Voice Cloning Tool"
-        font_style: "Button"
-        size_hint_y: None
-        height: self.texture_size[1]
-
-    MDLabel:
-        text: "MENU"
-        font_style: "Caption"
-        size_hint_y: None
-        height: self.texture_size[1]
-
-    ScrollView:
-
-        DrawerList:
-            OneLineListItem:
-                text:'Home'
-                on_release:app.root.current='home_screen'
-
-            OneLineListItem:
-                text:'Record Voice'
-                on_release:app.root.current='rec_screen'
-            OneLineListItem:
-                on_release:app.root.current='help_screen'
-                text:'Help'
-            OneLineListItem:
-                text:'About'
-                on_release:app.root.current='about_screen'
-
-            OneLineListItem:
-                text:'Contact Us'
-                on_release:app.root.current='contact_screen'
-ScreenManagement:
-    transition:FadeTransition()
-    HomeScreen:
-    RecordScreen:
-    HelpScreen:
-    AboutScreen:
-    ContactUSScreen:
-
-<HomeScreen>:
-    name:'home_screen'
-
-    NavigationLayout:
-
-        ScreenManager:
-
-            Screen:
-                SliderWin
-
-                BoxLayout:
-                    orientation: 'vertical'
-
-                    MDToolbar:
-                        title: "Explore Voice cloning Tool"
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-
-                    Widget:
-
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            ContentNavigationDrawer:
-                id: content_drawer
-
-<RecordScreen>:
-    name:'rec_screen'
-
-    NavigationLayout:
-
-        ScreenManager:
-
-            Screen:
-
-
-
-                BoxLayout:
-
-                    orientation: 'vertical'
-
-                    MDToolbar:
-                        title: "Explore Voice cloning Tool"
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-                    FloatLayout:
-                        Label:
-                            text:'Record your voice'
-                            size_hint:0.5,0.1
-                            color:0,1,0,1
-                            pos_hint:{'x':0.25,'y':0.9}
-                        TextInput:
-                            text:'This is a text example you have to read.'
-                            size_hint:0.7,0.2
-                            pos_hint:{'x':0.13,'y':0.7}
-                            color:0,1,0,1
-                        Button:
-                            text:'Record'
-                            size_hint:0.1,0.1
-                            pos_hint:{'x':0.45,'y':0.6}
-                            color:0,1,0,1
-                        Button:
-                            text:'Next'
-                            size_hint:0.1,0.1
-                            pos_hint:{'x':0.55,'y':0.6}
-                            color:0,1,0,1
-                        Button:
-                            text:'Prev'
-                            size_hint:0.1,0.1
-                            pos_hint:{'x':0.35,'y':0.6}
-                            color:0,1,0,1
-
-
-
-
-
-
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            ContentNavigationDrawer:
-                id: content_drawer
-
-<HelpScreen>:
-    name:'help_screen'
-
-    NavigationLayout:
-
-        ScreenManager:
-
-            Screen:
-
-
-
-                BoxLayout:
-
-                    orientation: 'vertical'
-
-                    MDToolbar:
-                        title: "Explore Voice cloning Tool"
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-
-                    FloatLayout:
-                        Label:
-                            text:'HELP'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.9}
-                            color:1,0,0,1
-                        Label:
-                            text:'See the text displayed on the screen'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.85}
-                            color:0,1,0,1
-                        Label:
-                            text:'and read it while holding record button.'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.80}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'As soon as you complete reading the text'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.75}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'release the hold button.Click next to view'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.70}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'next text.Prev in case you want to repeat previous text.'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.65}
-                            color:0,1,0,1
-                        Label:
-                            text:'For any additional queries you can contact the developer'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.60}
-                            color:0,1,0,1
-                        Label:
-                            text:'on:darkemperorVKO@gmail.com'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.55}
-                            color:0,1,0,1
-
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            ContentNavigationDrawer:
-                id: content_drawer
-
-
-
-<AboutScreen>:
-    name:'about_screen'
-
-    NavigationLayout:
-
-        ScreenManager:
-
-            Screen:
-
-
-
-                BoxLayout:
-
-                    orientation: 'vertical'
-
-                    MDToolbar:
-                        title: "Explore Voice cloning Tool"
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-
-                    FloatLayout:
-                        Label:
-                            text:'ABOUT VOICE CLONING APP'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.9}
-                            color:1,0,0,1
-                        Label:
-                            text:'This app was developed by Vikas Kumar Ojha'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.85}
-                            color:0,1,0,1
-                        Label:
-                            text:'so as to aid the user in creating voice sample '
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.80}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'currently app supports just creating data'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.75}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'as the AI model for the app was too heavy for'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.70}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'deploying on a phone. '
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.65}
-                            color:0,1,0,1
-                        Label:
-                            text:'But in future backend may be deployed in cloud.'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.60}
-                            color:0,1,0,1
-                        Label:
-                            text:'Currently the app only support data creation in english '
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.55}
-                            color:0,1,0,1
-
-                        Label:
-                            text:'but soon enough it will be available for Hindi.'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.50}
-                            color:0,1,0,1
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            ContentNavigationDrawer:
-                id: content_drawer
-
-
-<ContactUSScreen>:
-    name:'contact_screen'
-
-    NavigationLayout:
-
-        ScreenManager:
-
-            Screen:
-
-
-
-                BoxLayout:
-
-                    orientation: 'vertical'
-
-                    MDToolbar:
-                        title: "Explore Voice cloning Tool"
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-
-                    FloatLayout:
-                        Label:
-                            text:'CONTACT US'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.9}
-                            color:1,0,0,1
-                        Label:
-                            text:'Email id:darkemperorVKO@gmail.com'
-                            size_hint:0.5,0.1
-                            pos_hint:{'x':0.3,'y':0.85}
-                            color:1,0,0,1
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            ContentNavigationDrawer:
-                id: content_drawer
-
-
-'''
 
 #Slider part.
 class UISlide(Screen):
@@ -494,6 +210,6 @@ class DrawerList(ThemableBehavior, MDList):
 
 class TestNavigationDrawer(MDApp):
     def build(self):
-        return Builder.load_string(KV1)
+        return Builder.load_file('UI.kv')
 
 TestNavigationDrawer().run()
